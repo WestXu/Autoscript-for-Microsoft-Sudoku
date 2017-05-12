@@ -45,8 +45,8 @@ notebutton_x = 496
 notebutton_y = 672
 
 //第一个方块的坐标
-firstblock_x = 572
-firstblock_y = 141
+firstblock_x = topleft_x + blocksize / 8
+firstblock_y = topleft_y + halfsize
 
 //第一个数字的坐标
 firstnum_x = 596
@@ -124,12 +124,20 @@ Sub AllBoards_CheckClick(col)	//所有数版判断颜色点击
 End Sub
 
 
+Function x_of_c(c)  //根据列找x坐标
+    x_of_c = c * blocksize + firstblock_x
+End Function
+
+Function y_of_r(r)  //根据行找y坐标
+    y_of_r = r * blocksize + firstblock_y
+End Function
+
 Function localize_c(x)	//定位x的列
-    localize_c = (x + halfsize - topleft_x) \ blocksize
+    localize_c = (x + halfsize - topleft_x) \ blocksize + 1
 End Function
 
 Function localize_r(y)	//定位y的行
-    localize_r = (y + halfsize - topleft_y) \ blocksize
+    localize_r = (y + halfsize - topleft_y) \ blocksize + 1
 End Function
 
 Function relative_c(x)	//定位x的相对行
@@ -140,7 +148,7 @@ Function relative_r(y)	//定位y的相对行
     relative_r = localize_r(y) mod 3
 End Function
 
-Sub delnote_related(x, y)//传入方块中心坐标，删除同行同列同九宫格的note
+Sub delnote_related(x, y)//传入方块坐标，删除同行同列同九宫格的note
     Dim x1, x2, y1, y2
 
     //一行消除标记
@@ -172,10 +180,10 @@ Sub delnote_related(x, y)//传入方块中心坐标，删除同行同列同九宫格的note
         y2 = - 1
     End If
 
-    Call Color_Click(x -20 + blocksize * x1, y + blocksize * y1, purple)   // 中心向左移动20是取颜色的安全点 
-    Call Color_Click(x -20 + blocksize * x2, y + blocksize * y1, purple)
-    Call Color_Click(x -20 + blocksize * x1, y + blocksize * y2, purple)
-    Call Color_Click(x -20 + blocksize * x2, y + blocksize * y2, purple)
+    Call Color_Click(x - 20 + blocksize * x1, y + blocksize * y1, purple)   // 中心向左移动20是取颜色的安全点 
+    Call Color_Click(x - 20 + blocksize * x2, y + blocksize * y1, purple)
+    Call Color_Click(x - 20 + blocksize * x1, y + blocksize * y2, purple)
+    Call Color_Click(x - 20 + blocksize * x2, y + blocksize * y2, purple)
 
 End Sub
 
@@ -191,6 +199,82 @@ Sub delnote_number	//删除一页中所有冲突的标记
         intY = intY + blocksize
     Loop
 End Sub
+
+Sub fill_and_delnote(x, y)  //填充数字并删除冲突标记（填充模式进，填充模式出）
+    MoveTo x, y 	//填充数字
+    LeftClick 1
+    Delay delayer
+    Call notemode  
+    Call delnote_related(x, y) 
+    Call notemode  //解除note模式
+End Sub
+
+Sub step3_single_number
+    Dim c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor
+    //每行
+    For r = 0 To 8
+        MoveTo topleft_x - halfsize, y_of_r(r)  //展示进度
+        colornum = 0
+        For c=0 to 8
+            x = x_of_c(c)
+            y = y_of_r(r)
+            If GetPixelColor(x, y) = purple Then 
+                colornum = colornum + 1 	// 一行中的紫色方块个数计数器
+                goodcolor = c 		//一行中最后的一个紫色方块
+            End If
+        Next
+        
+        If colornum = 1 Then 
+            Call fill_and_delnote(x_of_c(goodcolor), y_of_r(r))
+            Call step3_single_number      //这个数字从头开始
+        End If
+    Next
+
+    //每列
+    For c = 0 To 8
+        MoveTo x_of_c(c), topleft_y - halfsize  //展示进度
+        colornum = 0
+        For r=0 to 8
+            x = x_of_c(c)
+            y = y_of_r(r)
+            If GetPixelColor(x, y) = purple Then 
+                colornum = colornum + 1 	// 一列中的紫色方块个数计数器
+                goodcolor = r 		//一列中最后的一个紫色方块
+            End If
+        Next
+        
+        If colornum = 1 Then 
+            Call fill_and_delnote(x_of_c(c), y_of_r(goodcolor))
+            Call step3_single_number       //这个数字从头开始
+        End If
+    Next
+
+    //每九宫格
+    For area_r = 1 To 3
+        For area_c = 1 To 3
+            MoveTo x_of_c((area_c - 1) * 3 + 2), y_of_r((area_r - 1) * 3 + 2)
+            colornum = 0
+            For small_r = 1 To 3
+                For small_c = 1 To 3
+                    c = (area_c - 1) * 3 + small_c
+                    r = (area_r - 1) * 3 + small_r
+                    If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then
+                        colornum = colornum + 1
+                        goodcolor_c = c
+                        goodcolor_r = r
+                    End If
+                Next
+            Next
+            If colornum = 1 Then 
+                Call fill_and_delnote(x_of_c(c), y_of_r(goodcolor))
+                Call step3_single_number       //这个数字从头开始
+            End If
+        Next
+    Next
+
+End Sub
+
+
 //=================================END=======================================
 
 
@@ -218,587 +302,12 @@ Call notemode    //解除note模式
 Rem 第三步
 //第三步：填充每行列缺少的个数为一的数字
 
-number=0
-Do While number < 9
-    MoveTo number * blocksize + firstnum_x, firstnum_y
-	
+For number = 0 to 8
+    MoveTo number * blocksize + firstnum_x, firstnum_y  //展示进度
     LeftClick 1
-
     Delay delayer
-        
-    Rem 从这个数字开头开始
-    //每行
-
-
-    For pointr = 0 To 8
-        MoveTo 550,pointr * blocksize + firstblock_y  //展示进度
-        colornum=0
-        For pointc=0 to 8
-            pointx = pointc * blocksize + firstblock_x
-            pointy= pointr*blocksize+firstblock_y
-            GetColor = GetPixelColor(pointx, pointy)
-
-            If getcolor = purple Then 
-                colornum=colornum+1
-                goodcolor=pointc
-            End If
-        Next
-        
-        
-        If colornum = 1 Then 
-   
-            FindColor topleft_x,pointr * blocksize + firstblock_y,089,pointr * blocksize + firstblock_y,blue,intX3,intY3
-            If intX3 > 0 And intY3 > 0 Then 
-        
-            Else 
-                MoveTo goodcolor * blocksize + firstblock_x+halfsize, pointr * blocksize + firstblock_y  //填充数字
-                LeftClick 1
-                Delay delayer
-                    
-                  
-                Call notemode
-               
-  
-                intX2 = goodcolor * blocksize + firstblock_x
-                intY2 =  pointr * blocksize + firstblock_y-halfsize
-                //重复第二步
-                //--------------------------------
-
-
-                intX = intX2 + 5
-                intY = intY2
-
-                //一行判断点击
-                For pointc=0 to 8
-                    pointx = pointc * blocksize + firstblock_x
-                    pointy= intY+halfsize
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = purple Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay delayer
-                    End If
-                next
-
-                //一列判断点击
-                For pointr=0 to 8
-                    pointx = intX
-                    pointy= pointr*blocksize+ 137
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = purple Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay delayer
-                    End If
-                Next
-
-
-                //九宫格点击
-                If intX + halfsize > topleft_x and intX + halfsize < topleft_x + blocksize or intX + halfsize > topleft_x + blocksize * 3 and intX + halfsize < topleft_x + blocksize * 4 or intX + halfsize > topleft_x + blocksize * 6 and intX + halfsize < topleft_x + blocksize * 7 Then 
-                    //一列
-                    x1 = 1
-                    x2 = 2
-                    If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                        //一列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //一列二行
-                    If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //一列三行
-                    If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-
-
-
-                If intX + halfsize > topleft_x+blocksize and intX + halfsize < topleft_x + blocksize*2 or intX + halfsize > topleft_x + blocksize * 4 and intX + halfsize < topleft_x + blocksize * 5 or intX + halfsize > topleft_x + blocksize * 7 and intX + halfsize < topleft_x + blocksize * 8 Then 
-                    //二列
-                    x1 = -1
-                    x2 = 1
-                    If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                        //二列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //二列二行
-                    If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //二列三行
-                    If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                If intX + halfsize > topleft_x+blocksize*2 and intX + halfsize < topleft_x + blocksize*3 or intX + halfsize > topleft_x + blocksize * 5 and intX + halfsize < topleft_x + blocksize * 6 or intX + halfsize > topleft_x + blocksize * 8 and intX + halfsize < topleft_x + blocksize * 9 Then 
-                    //三列
-                    x1 = -2
-                    x2 = -1
-                    If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                        //三列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //三列二行
-                    If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //三列三行
-                    If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-  
-
-                GetColor = GetPixelColor(intX + blocksize * x1, intY + blocksize * y1 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x1, intY+blocksize*y1+halfsize
-                    LeftClick 1
-                    Delay delayer
-                End If
-
-                GetColor = GetPixelColor(intX + blocksize * x2, intY + blocksize * y1 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x2, intY+blocksize*y1+halfsize
-                    LeftClick 1
-                    Delay delayer
-                End If
-
-                GetColor = GetPixelColor(intX + blocksize * x1, intY + blocksize * y2 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x1, intY+blocksize*y2+halfsize
-                    LeftClick 1
-                    Delay delayer
-                End If
-
-                GetColor = GetPixelColor(intX + blocksize * x2, intY + blocksize * y2 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x2, intY+blocksize*y2+halfsize
-                    LeftClick 1
-                    Delay delayer
-
-
-
-                End If
-
-
-                //重复结束---------------------------------------------
-
-                
-                Call notemode  //解除note模式
-                
-                Goto 从这个数字开头开始
-                
-            End If
-        	
-        End If
-
-    Next
-
-    //每列
-    For pointc = 0 To 8
-        MoveTo pointc * blocksize + firstblock_x+halfsize ,90 //展示进度
-        colornum=0
-        For pointr=0 to 8
-            pointx = pointc * blocksize + firstblock_x
-            pointy= pointr*blocksize+firstblock_y
-            GetColor = GetPixelColor(pointx, pointy)
-
-            If getcolor = purple Then 
-                colornum=colornum+1
-                goodcolor=pointr
-            End If
-        Next
-        
-        If colornum = 1 Then 
-   
-            FindColor pointc*blocksize+firstblock_x,topleft_y,pointc*blocksize+firstblock_x,botright_y,blue,intX3,intY3
-            If intX3 > 0 And intY3 > 0 Then 
-        
-            Else 
-                MoveTo pointc * blocksize + firstblock_x+halfsize, goodcolor * blocksize + firstblock_y  //填充数字
-                LeftClick 1
-                Delay delayer
-                
-              
-                Call notemode
-               
-                intX2 = pointc * blocksize + firstblock_x
-                intY2 =goodcolor * blocksize + firstblock_y-halfsize
-                //重复第二步
-                //--------------------------------
-
-
-                intX = intX2 + 5
-                intY = intY2
-
-                //一行判断点击
-                For pointc=0 to 8
-                    pointx = pointc * blocksize + firstblock_x
-                    pointy= intY+halfsize
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = purple Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay delayer
-                    End If
-                next
-
-                //一列判断点击
-                For pointr=0 to 8
-                    pointx = intX
-                    pointy= pointr*blocksize+ 137
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = purple Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay delayer
-                    End If
-                Next
-
-
-                //九宫格点击
-                If intX + halfsize > topleft_x and intX + halfsize < topleft_x + blocksize or intX + halfsize > topleft_x + blocksize * 3 and intX + halfsize < topleft_x + blocksize * 4 or intX + halfsize > topleft_x + blocksize * 6 and intX + halfsize < topleft_x + blocksize * 7 Then 
-                    //一列
-                    x1 = 1
-                    x2 = 2
-                    If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                        //一列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //一列二行
-                    If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //一列三行
-                    If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-
-
-
-                If intX + halfsize > topleft_x+blocksize and intX + halfsize < topleft_x + blocksize*2 or intX + halfsize > topleft_x + blocksize * 4 and intX + halfsize < topleft_x + blocksize * 5 or intX + halfsize > topleft_x + blocksize * 7 and intX + halfsize < topleft_x + blocksize * 8 Then 
-                    //二列
-                    x1 = -1
-                    x2 = 1
-                    If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                        //二列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //二列二行
-                    If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //二列三行
-                    If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                If intX + halfsize > topleft_x+blocksize*2 and intX + halfsize < topleft_x + blocksize*3 or intX + halfsize > topleft_x + blocksize * 5 and intX + halfsize < topleft_x + blocksize * 6 or intX + halfsize > topleft_x + blocksize * 8 and intX + halfsize < topleft_x + blocksize * 9 Then 
-                    //三列
-                    x1 = -2
-                    x2 = -1
-                    If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                        //三列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //三列二行
-                    If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //三列三行
-                    If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-  
-
-                GetColor = GetPixelColor(intX + blocksize * x1, intY + blocksize * y1 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x1, intY+blocksize*y1+halfsize
-                    LeftClick 1
-                    Delay delayer
-                End If
-
-                GetColor = GetPixelColor(intX + blocksize * x2, intY + blocksize * y1 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x2, intY+blocksize*y1+halfsize
-                    LeftClick 1
-                    Delay delayer
-                End If
-
-                GetColor = GetPixelColor(intX + blocksize * x1, intY + blocksize * y2 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x1, intY+blocksize*y2+halfsize
-                    LeftClick 1
-                    Delay delayer
-                End If
-
-                GetColor = GetPixelColor(intX + blocksize * x2, intY + blocksize * y2 + halfsize)
-                If getcolor = purple Then 
-                    MoveTo intX+blocksize*x2, intY+blocksize*y2+halfsize
-                    LeftClick 1
-                    Delay delayer
-
-
-
-                End If
-
-
-                //重复结束---------------------------------------------
-
-                Call notemode  //解除note模式
-                
-                Goto 从这个数字开头开始
-            End If
-        	
-        End If
-
-    Next
-    //每九宫格
-    For y2 = 1 To 3
-        For x2 = 1 To 3
-            MoveTo 652 + blocksize * 3 * (x2 - 1), 199 + blocksize * 3 * (y2 - 1)
-            colornum = 0
-            For y = 1 To 3
-                For x = 1 To 3
-                    GetColor = GetPixelColor(blocksize * x + blocksize * 3 * (x2 - 1) + 514, blocksize * y + 83 + blocksize * 3 * (y2 - 1))
-                    If getcolor = purple Then
-                        colornum = colornum + 1
-                        goodcolorx = x
-                        goodcolory = y
-                    End If
-                Next	
-            Next
-
-            If colornum = 1 Then 
-                FindColor 594+ blocksize * 3 * (x2 - 1), firstblock_y+ blocksize * 3 * (y2 - 1), 710+ blocksize * 3 * (x2 - 1), 257+ blocksize * 3 * (y2 - 1), blue, intX, intY
-                If intX > 0 And intY > 0 Then
-                Else
-                    MoveTo blocksize * goodcolorx + 514+ blocksize * 3 * (x2 - 1), blocksize * goodcolory + 83+ blocksize * 3 * (y2 - 1)
-                    LeftClick 1
-                    Delay delayer
-                    
-                    Call notemode
-                    
-                    intX2 = blocksize * goodcolorx + 514+ blocksize * 3 * (x2 - 1)-halfsize
-                    intY2 = blocksize * goodcolory + 83+ blocksize * 3 * (y2 - 1)-halfsize
-                    //重复第二步
-                    //--------------------------------
-
-
-                    intX = intX2 + 5
-                    intY = intY2
-
-                    //一行判断点击
-                    For pointc=0 to 8
-                        pointx = pointc * blocksize + firstblock_x
-                        pointy= intY+halfsize
-                        GetColor = GetPixelColor(pointx, pointy)
-                        If getcolor = purple Then 
-                            MoveTo pointx, pointy
-                            LeftClick 1
-                            Delay delayer
-                        End If
-                    next
-
-                    //一列判断点击
-                    For pointr=0 to 8
-                        pointx = intX
-                        pointy= pointr*blocksize+ 137
-                        GetColor = GetPixelColor(pointx, pointy)
-                        If getcolor = purple Then 
-                            MoveTo pointx, pointy
-                            LeftClick 1
-                            Delay delayer
-                        End If
-                    Next
-
-
-                    //九宫格点击
-                    If intX + halfsize > topleft_x and intX + halfsize < topleft_x + blocksize or intX + halfsize > topleft_x + blocksize * 3 and intX + halfsize < topleft_x + blocksize * 4 or intX + halfsize > topleft_x + blocksize * 6 and intX + halfsize < topleft_x + blocksize * 7 Then 
-                        //一列
-                        x1 = 1
-                        x2 = 2
-                        If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                            //一列一行
-                            y1 = 1
-                            y2 = 2
-                        End If
-                        //一列二行
-                        If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-                            y1 = -1
-                            y2 = 1
-                        End If
-                        //一列三行
-                        If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-                            y1 = - 2 
-                            y2 = - 1 
-                        End If
-
-                    End If
-
-
-
-
-
-
-
-                    If intX + halfsize > topleft_x+blocksize and intX + halfsize < topleft_x + blocksize*2 or intX + halfsize > topleft_x + blocksize * 4 and intX + halfsize < topleft_x + blocksize * 5 or intX + halfsize > topleft_x + blocksize * 7 and intX + halfsize < topleft_x + blocksize * 8 Then 
-                        //二列
-                        x1 = -1
-                        x2 = 1
-                        If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                            //二列一行
-                            y1 = 1
-                            y2 = 2
-                        End If
-                        //二列二行
-                        If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-
-                            y1 = -1
-                            y2 = 1
-                        End If
-                        //二列三行
-                        If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-
-                            y1 = - 2 
-                            y2 = - 1 
-                        End If
-
-                    End If
-
-
-
-                    If intX + halfsize > topleft_x+blocksize*2 and intX + halfsize < topleft_x + blocksize*3 or intX + halfsize > topleft_x + blocksize * 5 and intX + halfsize < topleft_x + blocksize * 6 or intX + halfsize > topleft_x + blocksize * 8 and intX + halfsize < topleft_x + blocksize * 9 Then 
-                        //三列
-                        x1 = -2
-                        x2 = -1
-                        If intY + halfsize > topleft_y and intY + halfsize < topleft_y + blocksize or intY + halfsize > topleft_y + blocksize * 3 and intY + halfsize < topleft_y + blocksize * 4 or intY + halfsize > topleft_y + blocksize * 6 and intY + halfsize < topleft_y + blocksize * 7 Then 
-                            //三列一行
-                            y1 = 1
-                            y2 = 2
-                        End If
-                        //三列二行
-                        If intY + halfsize > topleft_y+blocksize and intY + halfsize < topleft_y + blocksize*2 or intY + halfsize > topleft_y + blocksize * 4 and intY + halfsize < topleft_y + blocksize * 5 or intY + halfsize > topleft_y + blocksize * 7 and intY + halfsize < topleft_y + blocksize * 8 Then 
-
-                            y1 = -1
-                            y2 = 1
-                        End If
-                        //三列三行
-                        If intY + halfsize > topleft_y+blocksize*2 and intY + halfsize < topleft_y + blocksize*3 or intY + halfsize > topleft_y + blocksize * 5 and intY + halfsize < topleft_y + blocksize * 6 or intY + halfsize > topleft_y + blocksize * 8 and intY + halfsize < topleft_y + blocksize * 9 Then 
-
-                            y1 = - 2 
-                            y2 = - 1 
-                        End If
-
-                    End If
-
-
-
-
-  
-
-                    GetColor = GetPixelColor(intX + blocksize * x1, intY + blocksize * y1 + halfsize)
-                    If getcolor = purple Then 
-                        MoveTo intX+blocksize*x1, intY+blocksize*y1+halfsize
-                        LeftClick 1
-                        Delay delayer
-                    End If
-
-                    GetColor = GetPixelColor(intX + blocksize * x2, intY + blocksize * y1 + halfsize)
-                    If getcolor = purple Then 
-                        MoveTo intX+blocksize*x2, intY+blocksize*y1+halfsize
-                        LeftClick 1
-                        Delay delayer
-                    End If
-
-                    GetColor = GetPixelColor(intX + blocksize * x1, intY + blocksize * y2 + halfsize)
-                    If getcolor = purple Then 
-                        MoveTo intX+blocksize*x1, intY+blocksize*y2+halfsize
-                        LeftClick 1
-                        Delay delayer
-                    End If
-
-                    GetColor = GetPixelColor(intX + blocksize * x2, intY + blocksize * y2 + halfsize)
-                    If getcolor = purple Then 
-                        MoveTo intX+blocksize*x2, intY+blocksize*y2+halfsize
-                        LeftClick 1
-                        Delay delayer
-
-
-
-                    End If
-
-
-                    //重复结束---------------------------------------------
-
-                    Call notemode  //解除note模式
-                
-                    Goto 从这个数字开头开始
-                End If    
-            End If
-        Next
-    Next
-    number = number + 1
-loop
-
-
+    Call step3_single_number
+Next
 
 
 //第四步：放数字
