@@ -10,7 +10,7 @@ RunOnce=1
 EnableWindow=
 MacroID=459e373f-a1e2-4493-ba78-6f89fe389e58
 Description=Sudoku
-Enable=0
+Enable=1
 AutoRun=0
 [Repeat]
 Type=0
@@ -28,32 +28,32 @@ SetupOCXFile=
 //===============================常量========================================
 
 //数版位置坐标
-left_x = 795
-top_y = 145
-right_x = 1548
-bottom_y = 898
+left_x = 796  
+top_y = 146
+right_x = 1547
+bottom_y = 897
 
 //笔记按钮坐标
 notebutton_x = 698
-notebutton_y = 949
+notebutton_y = 949 
 
 //下方第一个数字的坐标
-firstnum_x = 836
-firstnum_y = 948
+firstnum_x = 838 
+firstnum_y = 949
 
 //系统延时
 delayer = 20
-
 
 
 //以下常量不用改
 blocksize = (right_x - left_x) \ 9
 halfsize = blocksize \ 2
 white = "FFFFFF"
+yellow = "E0FDFF"
 purple = "FBE2E4"
 blue = "93691E"  //选中一个区块的时候，区块左上角边缘处的深蓝色
 //第一个方块的坐标
-firstblock_x = left_x + blocksize \ 7
+firstblock_x = left_x + blocksize \ 6
 firstblock_y = top_y + halfsize
 
 
@@ -64,9 +64,27 @@ firstblock_y = top_y + halfsize
 
 //第一步：全部标满
 
-Call notemode	//进入note模式
-Call AllBoards_CheckClick(white)
+Call notemode//进入note模式
+For r = 1 To 9
+    For c = 1 To 9
+        Getcolor = GetPixelColor(x_of_c(c), y_of_r(r))
+        If Getcolor = white or Getcolor = yellow Then 
+            MoveTo x_of_c(c), y_of_r(r)
+            LeftClick 1
+            KeyPress "1", 1
+            KeyPress "2", 1
+            KeyPress "3", 1
+            KeyPress "4", 1
+            KeyPress "5", 1
+            KeyPress "6", 1
+            KeyPress "7", 1
+            KeyPress "8", 1
+            KeyPress "9", 1
+        End If
+    Next
+Next
 
+Call clear_selection
 
 //第二步：取消冲突标记
 For number = 0 to 8
@@ -98,10 +116,7 @@ filled = 0 //已放数字个数计数器
 For pointr = 1 To 9
     //一行判断
     For pointc = 1 To 9
-
-        MoveTo right_x + 20, bottom_y   //点击空白处消除数字选中
-        leftClick 1
-        Delay delayer
+        Call clear_selection
 
         pointx = x_of_c(pointc)
         pointy = y_of_r(pointr)
@@ -120,16 +135,15 @@ For pointr = 1 To 9
                 End If
             Next
 
-            If  colornum = 1  Then 
-                
-                MoveTo right_x + 20, bottom_y   //点击空白处消除数字选中
-                leftClick 1
-                Delay delayer * 2
+            If colornum = 1 Then 
+            
+                Call clear_selection
                 MoveTo goodcolor * blocksize + firstnum_x, firstnum_y
                 leftClick 1
                 Delay delayer
                 Call fill_and_delnote(pointx, pointy)
                 filled = filled + 1
+                Call step3_single_number
             End If
             
         End If
@@ -139,12 +153,10 @@ For pointr = 1 To 9
 Next
 
 If filled = 0 Then 
-Goto 第三步
+    Goto 第三步
 Else
-Goto 第四步
+    Goto 第四步
 End If
-
-
 
 
 
@@ -152,8 +164,13 @@ End If
 //===============================子过程======================================
 
 Sub notemode	//开关note模式
-    MoveTo notebutton_x, notebutton_y
-    leftClick 1
+    KeyPress "N", 1
+    Delay delayer * 2
+End Sub
+
+Sub clear_selection   //点击空白处消除数字选中
+    MoveTo right_x + halfsize, bottom_y
+    LeftClick 1
     Delay delayer * 2
 End Sub
 
@@ -166,50 +183,17 @@ Sub Color_Click(x, y, col) //某点判断颜色点击
 End Sub
 
 
-Sub OneRow_CheckClick(r, col)	//某行判断颜色点击
-    Dim c, x, y
-    For c=0 to 8
-        x = c * blocksize + firstblock_x
-        y = r * blocksize + firstblock_y
-        Call Color_Click(x, y, col)
+Sub OneY_CheckClick(y, col)	//某y坐标判断颜色点击
+    Dim c
+    For c = 1 to 9
+        Call Color_Click(x_of_c(c), y, col)
     Next
 End Sub
 
-
-
-Sub OneY_CheckClick(y, col)	//某y坐标判断颜色点击 临时
-    Dim c, x
-    For c=0 to 8
-        x = c * blocksize + firstblock_x
-        Call Color_Click(x, y, col)
-    Next
-End Sub
-
-Sub OneX_CheckClick(x, col)	//某x坐标判断颜色点击 临时
-    Dim c, y
-    For c=0 to 8
-        y = c * blocksize + firstblock_y
-        Call Color_Click(x, y, col)
-    Next
-End Sub
-
-
-
-
-Sub OneBoard_CheckClick(col)	//整版判断颜色点击
+Sub OneX_CheckClick(x, col)	//某x坐标判断颜色点击
     Dim r
-    For r=0 to 8
-        Call OneRow_CheckClick(r, white)
-    Next
-End Sub
-        
-Sub AllBoards_CheckClick(col)	//所有数版判断颜色点击
-    Dim number
-    For number = 0 To 8
-        MoveTo number * blocksize + firstnum_x, firstnum_y
-        leftClick 1
-        Delay delayer * 2
-        Call OneBoard_CheckClick(col)
+    For r = 1 to 9
+        Call Color_Click(x, y_of_r(r), col)
     Next
 End Sub
 
@@ -276,7 +260,6 @@ Sub delnote_related(x, y)//传入方块坐标，删除同行同列同九宫格的note
         y2 = - 1
     End If
     
-
     Call Color_Click(x + blocksize * x1, y + blocksize * y1, purple)
     Call Color_Click(x + blocksize * x2, y + blocksize * y1, purple)
     Call Color_Click(x + blocksize * x1, y + blocksize * y2, purple)
@@ -288,7 +271,7 @@ Sub delnote_number	//删除一页中所有冲突的标记
     Dim intX, intY
     intY = top_y
     Do While intY <= bottom_y and intY >= top_y
-        FindColor left_x, intY, right_x, bottom_y, blue, intX, intY  //这里为什么是intY而不是top_y？
+        FindColor left_x, intY, right_x, bottom_y, blue, intX, intY  //每行只可能有一个，所以inY确保不重复
         If intX > 0 And intY > 0 Then 
             Call delnote_related(intX, intY + halfsize)
         End if
@@ -378,7 +361,6 @@ Sub step3_single_number   //第三步的每个number循环节
             End If
         Next
     Next
-
 End Sub
 
 
