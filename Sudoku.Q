@@ -23,1053 +23,127 @@ SetupOCXFile=
 [Comment]
 
 [Script]
+
+
+//===============================常量========================================
+
+//数版位置坐标
+left_x = 796  
+top_y = 146
+right_x = 1547
+bottom_y = 897
+
+//笔记按钮坐标
+notebutton_x = 698
+notebutton_y = 949 
+
+//下方第一个数字的坐标
+firstnum_x = 838 
+firstnum_y = 949
+
+//系统延时
+delayer = 20
+
+
+//以下常量不用改
+blocksize = (right_x - left_x) \ 9
+halfsize = blocksize \ 2
+white = "FFFFFF"
+yellow = "E0FDFF"
+purple = "FBE2E4"
+blue = "93691E"  //选中一个区块的时候，区块左上角边缘处的深蓝色
+//第一个方块的坐标
+firstblock_x = left_x + blocksize \ 6
+firstblock_y = top_y + halfsize
+
+
+//=================================END=======================================
+
+
+
+
 //第一步：全部标满
-MoveTo 496, 672  //进入note模式
-LeftClick 1
-Delay 50
 
-For number = 0 To 8
-	
-    MoveTo number * 59 + 596, 671  //选择最下面的数字
-    LeftClick 1
-    Delay 50
-    //全部判断点击
-    For pointr=0 to 8
-        //一行判断点击
-        For pointc=0 to 8
-            pointx = pointc * 58 + 572
-            pointy= pointr*58+141
-            GetColor = GetPixelColor(pointx, pointy)
-
-            If getcolor = "FFFFFF" Then 
-                MoveTo pointx, pointy
-                LeftClick 1
-                Delay 50
-            End If
-
-            
-        Next
-
+Call notemode//进入note模式
+For r = 1 To 9
+    For c = 1 To 9
+        Getcolor = GetPixelColor(x_of_c(c), y_of_r(r))
+        If Getcolor = white or Getcolor = yellow Then 
+            MoveTo x_of_c(c), y_of_r(r)
+            LeftClick 1
+            KeyPress "1", 1
+            KeyPress "2", 1
+            KeyPress "3", 1
+            KeyPress "4", 1
+            KeyPress "5", 1
+            KeyPress "6", 1
+            KeyPress "7", 1
+            KeyPress "8", 1
+            KeyPress "9", 1
+        End If
     Next
+Next
 
+Call clear_selection
+
+//第二步：取消冲突标记
+For number = 0 to 8
+    MoveTo number * blocksize + firstnum_x, firstnum_y
+    leftClick 1
+    Delay delayer * 2
+    Call delnote_number
 Next
 
 
-
-
-
-
-
-//第二步：取消标记
-number=0
-Do While number < 9
-    MoveTo number * 59 + 596, 671
-	
-    LeftClick 1
-
-    Delay 50
-
-    For pointc=0 to 8
-        pointx = pointc * 58 + 572
-        pointy= pointr*58+141
-        GetColor = GetPixelColor(pointx, pointy)
-
-
-
-
-	
-	
-        intY = 112
-
-        Do 
-            FindColor 565,intY,1089,635,"93691E",intX,intY 
-            If intX > 0 And intY > 0 Then 
-
-                //一行判断点击
-                For pointc=0 to 8
-                    pointx = pointc * 58 + 572
-                    pointy= intY+29
-                    GetColor = GetPixelColor(pointx, pointy)
-
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                next
-
-                //一列判断点击
-                For pointr=0 to 8
-                    pointx = intX+29
-                    pointy= pointr*58+ 137
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                Next
-
-
-                //九宫格点击
-                If intX + 29 > 565 and intX + 29 < 565 + 58 or intX + 29 > 565 + 58 * 3 and intX + 29 < 565 + 58 * 4 or intX + 29 > 565 + 58 * 6 and intX + 29 < 565 + 58 * 7 Then 
-                    //一列
-                    x1 = 1
-                    x2 = 2
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //一列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //一列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //一列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-
-
-
-                If intX + 29 > 565+58 and intX + 29 < 565 + 58*2 or intX + 29 > 565 + 58 * 4 and intX + 29 < 565 + 58 * 5 or intX + 29 > 565 + 58 * 7 and intX + 29 < 565 + 58 * 8 Then 
-                    //二列
-                    x1 = -1
-                    x2 = 1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //二列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //二列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //二列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                If intX + 29 > 565+58*2 and intX + 29 < 565 + 58*3 or intX + 29 > 565 + 58 * 5 and intX + 29 < 565 + 58 * 6 or intX + 29 > 565 + 58 * 8 and intX + 29 < 565 + 58 * 9 Then 
-                    //三列
-                    x1 = -2
-                    x2 = -1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //三列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //三列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //三列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                GetColor = GetPixelColor(intX+58*x1, intY+58*y1+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y1+29
-                    LeftClick 1
-                    delay 50
-                End If
-
-                GetColor = GetPixelColor(intX+58*x2, intY+58*y1+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y1+29
-                    LeftClick 1
-                    delay 50
-                End If
-
-                GetColor = GetPixelColor(intX+58*x1, intY+58*y2+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y2+29
-                    LeftClick 1
-                    delay 50
-                End If
-
-                GetColor = GetPixelColor(intX+58*x2, intY+58*y2+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y2+29
-                    LeftClick 1
-                    delay 50
-
-
-
-                End If
-            Else
-                Goto 找不到就跳出
-            End if
-            intY = intY + 55
-
-        Loop
-        Rem 找不到就跳出
-
-    Next
-    number=number+1
-Loop
-
-
-
-MoveTo 496, 672 //解除note模式
-LeftClick 1
-Delay 50
-
-
-
+Call notemode    //解除note模式
 
 
 Rem 第三步
 //第三步：填充每行列缺少的个数为一的数字
 
-number=0
-Do While number < 9
-    MoveTo number * 59 + 596, 671
-	
-    LeftClick 1
-
-    Delay 50
-        
-    Rem 从这个数字开头开始
-    //每行
-
-
-    For pointr = 0 To 8
-        MoveTo 550,pointr * 58 + 141  //展示进度
-        colornum=0
-        For pointc=0 to 8
-            pointx = pointc * 58 + 572
-            pointy= pointr*58+141
-            GetColor = GetPixelColor(pointx, pointy)
-
-            If getcolor = "FBE2E4" Then 
-                colornum=colornum+1
-                goodcolor=pointc
-            End If
-        Next
-        
-        
-        If colornum = 1 Then 
-   
-            FindColor 565,pointr * 58 + 141,089,pointr * 58 + 141,"93691E",intX3,intY3
-            If intX3 > 0 And intY3 > 0 Then 
-        
-            Else 
-                MoveTo goodcolor * 58 + 572+29, pointr * 58 + 141  //填充数字
-                LeftClick 1
-                Delay 50
-                    
-                  
-                MoveTo 496, 672
-                LeftClick 1
-                Delay 50
-  
-                intX2 = goodcolor * 58 + 572
-                intY2 =  pointr * 58 + 141-29
-                //重复第二步
-                //--------------------------------
-
-
-                intX = intX2 + 5
-                intY = intY2
-
-                //一行判断点击
-                For pointc=0 to 8
-                    pointx = pointc * 58 + 572
-                    pointy= intY+29
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                next
-
-                //一列判断点击
-                For pointr=0 to 8
-                    pointx = intX
-                    pointy= pointr*58+ 137
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                Next
-
-
-                //九宫格点击
-                If intX + 29 > 565 and intX + 29 < 565 + 58 or intX + 29 > 565 + 58 * 3 and intX + 29 < 565 + 58 * 4 or intX + 29 > 565 + 58 * 6 and intX + 29 < 565 + 58 * 7 Then 
-                    //一列
-                    x1 = 1
-                    x2 = 2
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //一列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //一列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //一列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-
-
-
-                If intX + 29 > 565+58 and intX + 29 < 565 + 58*2 or intX + 29 > 565 + 58 * 4 and intX + 29 < 565 + 58 * 5 or intX + 29 > 565 + 58 * 7 and intX + 29 < 565 + 58 * 8 Then 
-                    //二列
-                    x1 = -1
-                    x2 = 1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //二列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //二列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //二列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                If intX + 29 > 565+58*2 and intX + 29 < 565 + 58*3 or intX + 29 > 565 + 58 * 5 and intX + 29 < 565 + 58 * 6 or intX + 29 > 565 + 58 * 8 and intX + 29 < 565 + 58 * 9 Then 
-                    //三列
-                    x1 = -2
-                    x2 = -1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //三列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //三列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //三列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-  
-
-                GetColor = GetPixelColor(intX + 58 * x1, intY + 58 * y1 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y1+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX + 58 * x2, intY + 58 * y1 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y1+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX + 58 * x1, intY + 58 * y2 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y2+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX + 58 * x2, intY + 58 * y2 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y2+29
-                    LeftClick 1
-                    Delay 50
-
-
-
-                End If
-
-
-                //重复结束---------------------------------------------
-
-                MoveTo 496, 672 //解除note模式
-                LeftClick 1
-                Delay 50
-                
-                Goto 从这个数字开头开始
-                
-            End If
-        	
-        End If
-
-    Next
-
-    //每列
-    For pointc = 0 To 8
-        MoveTo pointc * 58 + 572+29 ,90 //展示进度
-        colornum=0
-        For pointr=0 to 8
-            pointx = pointc * 58 + 572
-            pointy= pointr*58+141
-            GetColor = GetPixelColor(pointx, pointy)
-
-            If getcolor = "FBE2E4" Then 
-                colornum=colornum+1
-                goodcolor=pointr
-            End If
-        Next
-        
-        If colornum = 1 Then 
-   
-            FindColor pointc*58+572,112,pointc*58+572,635,"93691E",intX3,intY3
-            If intX3 > 0 And intY3 > 0 Then 
-        
-            Else 
-                MoveTo pointc * 58 + 572+29, goodcolor * 58 + 141  //填充数字
-                LeftClick 1
-                Delay 50
-                
-              
-                MoveTo 496, 672
-                LeftClick 1
-                Delay 50
-                intX2 = pointc * 58 + 572
-                intY2 =goodcolor * 58 + 141-29
-                //重复第二步
-                //--------------------------------
-
-
-                intX = intX2 + 5
-                intY = intY2
-
-                //一行判断点击
-                For pointc=0 to 8
-                    pointx = pointc * 58 + 572
-                    pointy= intY+29
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                next
-
-                //一列判断点击
-                For pointr=0 to 8
-                    pointx = intX
-                    pointy= pointr*58+ 137
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                Next
-
-
-                //九宫格点击
-                If intX + 29 > 565 and intX + 29 < 565 + 58 or intX + 29 > 565 + 58 * 3 and intX + 29 < 565 + 58 * 4 or intX + 29 > 565 + 58 * 6 and intX + 29 < 565 + 58 * 7 Then 
-                    //一列
-                    x1 = 1
-                    x2 = 2
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //一列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //一列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //一列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-
-
-
-                If intX + 29 > 565+58 and intX + 29 < 565 + 58*2 or intX + 29 > 565 + 58 * 4 and intX + 29 < 565 + 58 * 5 or intX + 29 > 565 + 58 * 7 and intX + 29 < 565 + 58 * 8 Then 
-                    //二列
-                    x1 = -1
-                    x2 = 1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //二列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //二列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //二列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                If intX + 29 > 565+58*2 and intX + 29 < 565 + 58*3 or intX + 29 > 565 + 58 * 5 and intX + 29 < 565 + 58 * 6 or intX + 29 > 565 + 58 * 8 and intX + 29 < 565 + 58 * 9 Then 
-                    //三列
-                    x1 = -2
-                    x2 = -1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //三列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //三列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //三列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-  
-
-                GetColor = GetPixelColor(intX + 58 * x1, intY + 58 * y1 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y1+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX + 58 * x2, intY + 58 * y1 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y1+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX + 58 * x1, intY + 58 * y2 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y2+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX + 58 * x2, intY + 58 * y2 + 29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y2+29
-                    LeftClick 1
-                    Delay 50
-
-
-
-                End If
-
-
-                //重复结束---------------------------------------------
-
-                MoveTo 496, 672 //解除note模式
-                LeftClick 1
-                Delay 50
-                
-                Goto 从这个数字开头开始
-            End If
-        	
-        End If
-
-    Next
-    //每九宫格
-    For y2 = 1 To 3
-        For x2 = 1 To 3
-            MoveTo 652 + 58 * 3 * (x2 - 1), 199 + 58 * 3 * (y2 - 1)
+For number = 0 to 8
+    MoveTo number * blocksize + firstnum_x, firstnum_y  //展示进度
+    leftClick 1
+    Delay delayer * 2
+    Call step3_single_number
+Next
+
+
+Rem 第四步
+//第四步：放数字
+filled = 0 //已放数字个数计数器
+//全行判断
+For pointr = 1 To 9
+    //一行判断
+    For pointc = 1 To 9
+        Call clear_selection
+
+        pointx = x_of_c(pointc)
+        pointy = y_of_r(pointr)
+
+        If GetPixelColor(pointx, pointy) = white Then 
             colornum = 0
-            For y = 1 To 3
-                For x = 1 To 3
-                    GetColor = GetPixelColor(58 * x + 58 * 3 * (x2 - 1) + 514, 58 * y + 83 + 58 * 3 * (y2 - 1))
-                    If getcolor = "FBE2E4" Then
-                        colornum = colornum + 1
-                        goodcolorx = x
-                        goodcolory = y
-                    End If
-                Next	
+
+            For number = 0 to 8
+                MoveTo number * blocksize + firstnum_x, firstnum_y  //选数字
+                leftClick 1
+                Delay delayer * 2
+
+                If GetPixelColor(pointx, pointy) = purple Then   //判断该格颜色
+                    colornum = colornum + 1
+                    goodcolor = number
+                End If
             Next
 
             If colornum = 1 Then 
-                FindColor 594+ 58 * 3 * (x2 - 1), 141+ 58 * 3 * (y2 - 1), 710+ 58 * 3 * (x2 - 1), 257+ 58 * 3 * (y2 - 1), "93691E", intX, intY
-                If intX > 0 And intY > 0 Then
-                Else
-                    MoveTo 58 * goodcolorx + 514+ 58 * 3 * (x2 - 1), 58 * goodcolory + 83+ 58 * 3 * (y2 - 1)
-                    LeftClick 1
-                    Delay 50
-                    MoveTo 496, 672
-                    LeftClick 1
-                    Delay 50
-  
-                    intX2 = 58 * goodcolorx + 514+ 58 * 3 * (x2 - 1)-29
-                    intY2 = 58 * goodcolory + 83+ 58 * 3 * (y2 - 1)-29
-                    //重复第二步
-                    //--------------------------------
-
-
-                    intX = intX2 + 5
-                    intY = intY2
-
-                    //一行判断点击
-                    For pointc=0 to 8
-                        pointx = pointc * 58 + 572
-                        pointy= intY+29
-                        GetColor = GetPixelColor(pointx, pointy)
-                        If getcolor = "FBE2E4" Then 
-                            MoveTo pointx, pointy
-                            LeftClick 1
-                            Delay 50
-                        End If
-                    next
-
-                    //一列判断点击
-                    For pointr=0 to 8
-                        pointx = intX
-                        pointy= pointr*58+ 137
-                        GetColor = GetPixelColor(pointx, pointy)
-                        If getcolor = "FBE2E4" Then 
-                            MoveTo pointx, pointy
-                            LeftClick 1
-                            Delay 50
-                        End If
-                    Next
-
-
-                    //九宫格点击
-                    If intX + 29 > 565 and intX + 29 < 565 + 58 or intX + 29 > 565 + 58 * 3 and intX + 29 < 565 + 58 * 4 or intX + 29 > 565 + 58 * 6 and intX + 29 < 565 + 58 * 7 Then 
-                        //一列
-                        x1 = 1
-                        x2 = 2
-                        If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                            //一列一行
-                            y1 = 1
-                            y2 = 2
-                        End If
-                        //一列二行
-                        If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-                            y1 = -1
-                            y2 = 1
-                        End If
-                        //一列三行
-                        If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-                            y1 = - 2 
-                            y2 = - 1 
-                        End If
-
-                    End If
-
-
-
-
-
-
-
-                    If intX + 29 > 565+58 and intX + 29 < 565 + 58*2 or intX + 29 > 565 + 58 * 4 and intX + 29 < 565 + 58 * 5 or intX + 29 > 565 + 58 * 7 and intX + 29 < 565 + 58 * 8 Then 
-                        //二列
-                        x1 = -1
-                        x2 = 1
-                        If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                            //二列一行
-                            y1 = 1
-                            y2 = 2
-                        End If
-                        //二列二行
-                        If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                            y1 = -1
-                            y2 = 1
-                        End If
-                        //二列三行
-                        If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                            y1 = - 2 
-                            y2 = - 1 
-                        End If
-
-                    End If
-
-
-
-                    If intX + 29 > 565+58*2 and intX + 29 < 565 + 58*3 or intX + 29 > 565 + 58 * 5 and intX + 29 < 565 + 58 * 6 or intX + 29 > 565 + 58 * 8 and intX + 29 < 565 + 58 * 9 Then 
-                        //三列
-                        x1 = -2
-                        x2 = -1
-                        If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                            //三列一行
-                            y1 = 1
-                            y2 = 2
-                        End If
-                        //三列二行
-                        If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                            y1 = -1
-                            y2 = 1
-                        End If
-                        //三列三行
-                        If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                            y1 = - 2 
-                            y2 = - 1 
-                        End If
-
-                    End If
-
-
-
-
-  
-
-                    GetColor = GetPixelColor(intX + 58 * x1, intY + 58 * y1 + 29)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo intX+58*x1, intY+58*y1+29
-                        LeftClick 1
-                        Delay 50
-                    End If
-
-                    GetColor = GetPixelColor(intX + 58 * x2, intY + 58 * y1 + 29)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo intX+58*x2, intY+58*y1+29
-                        LeftClick 1
-                        Delay 50
-                    End If
-
-                    GetColor = GetPixelColor(intX + 58 * x1, intY + 58 * y2 + 29)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo intX+58*x1, intY+58*y2+29
-                        LeftClick 1
-                        Delay 50
-                    End If
-
-                    GetColor = GetPixelColor(intX + 58 * x2, intY + 58 * y2 + 29)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo intX+58*x2, intY+58*y2+29
-                        LeftClick 1
-                        Delay 50
-
-
-
-                    End If
-
-
-                    //重复结束---------------------------------------------
-
-                    MoveTo 496, 672 //解除note模式
-                    LeftClick 1
-                    Delay 50
-                
-                    Goto 从这个数字开头开始
-                End If    
-            End If
-        Next
-    Next
-    number = number + 1
-loop
-
-
-
-
-//第四步：放数字
-MoveTo 1173, 369   //点击空白处消除数字选中
-LeftClick 1
-Delay 50
-Y = 112
-X = 565
-
-Rem 重新开始
-MoveTo 1173, 369    //点击空白处消除数字选中
-LeftClick 1
-Delay 50
-
-
-
-//全行判断
-For pointr = 0 To 8
-    //一行判断
-    For pointc = 0 To 8
-
-        MoveTo 1173, 369    //点击空白处消除数字选中
-        LeftClick 1
-        Delay 50
-
-        pointx = pointc * 58 + 572
-        pointy= pointr*58+141
-        GetColor = GetPixelColor(pointx, pointy)
-
-        If getcolor = "FFFFFF" Then 
-            intX2 = pointx-2    //兼容后面的代码
-            intY2 = pointy-29
-	 
-
-            colornum = 0
-	
-
-
-
-
-
-            For number=0 to 8
-                MoveTo number * 59 + 596, 671  //选数字
-                LeftClick 1
-                Delay 50
-                getcolor = GetPixelColor(intX2+2, intY2+29)  //判断该格颜色
-
-                If getcolor = "FBE2E4" Then 
-                    colornum = colornum + 1
-                    goodcolor=number
-                End If
-            Next
-
-            If  colornum = 1  Then 
-
-
-                number = goodcolor
-                
-                MoveTo 1173, 369    //点击空白处消除数字选中
-                LeftClick 1
-                Delay 50
-                MoveTo number * 59 + 596, 671
-                LeftClick 1
-                Delay 50
-
-                MoveTo intX2 + 5, intY2 + 29
-                LeftClick 1
-                Delay 50
-                MoveTo 496, 672
-                LeftClick 1
-                Delay 50
-
-                //重复第二步
-                //--------------------------------
-
-
-                GetColor = GetPixelColor(pointx, pointy)
-
-
-                intX = intX2 + 5
-                intY = intY2
-
-                //一行判断点击
-                For pointc=0 to 8
-                    pointx = pointc * 58 + 572
-                    pointy= intY+29
-                    GetColor = GetPixelColor(pointx, pointy)
-
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                next
-
-                //一列判断点击
-                For pointr=0 to 8
-                    pointx = intX+29
-                    pointy= pointr*58+ 137
-                    GetColor = GetPixelColor(pointx, pointy)
-                    If getcolor = "FBE2E4" Then 
-                        MoveTo pointx, pointy
-                        LeftClick 1
-                        Delay 50
-                    End If
-                Next
-
-
-                //九宫格点击
-                If intX + 29 > 565 and intX + 29 < 565 + 58 or intX + 29 > 565 + 58 * 3 and intX + 29 < 565 + 58 * 4 or intX + 29 > 565 + 58 * 6 and intX + 29 < 565 + 58 * 7 Then 
-                    //一列
-                    x1 = 1
-                    x2 = 2
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //一列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //一列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //一列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-
-
-
-                If intX + 29 > 565+58 and intX + 29 < 565 + 58*2 or intX + 29 > 565 + 58 * 4 and intX + 29 < 565 + 58 * 5 or intX + 29 > 565 + 58 * 7 and intX + 29 < 565 + 58 * 8 Then 
-                    //二列
-                    x1 = -1
-                    x2 = 1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //二列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //二列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //二列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-                If intX + 29 > 565+58*2 and intX + 29 < 565 + 58*3 or intX + 29 > 565 + 58 * 5 and intX + 29 < 565 + 58 * 6 or intX + 29 > 565 + 58 * 8 and intX + 29 < 565 + 58 * 9 Then 
-                    //三列
-                    x1 = -2
-                    x2 = -1
-                    If intY + 29 > 112 and intY + 29 < 112 + 58 or intY + 29 > 112 + 58 * 3 and intY + 29 < 112 + 58 * 4 or intY + 29 > 112 + 58 * 6 and intY + 29 < 112 + 58 * 7 Then 
-                        //三列一行
-                        y1 = 1
-                        y2 = 2
-                    End If
-                    //三列二行
-                    If intY + 29 > 112+58 and intY + 29 < 112 + 58*2 or intY + 29 > 112 + 58 * 4 and intY + 29 < 112 + 58 * 5 or intY + 29 > 112 + 58 * 7 and intY + 29 < 112 + 58 * 8 Then 
-
-                        y1 = -1
-                        y2 = 1
-                    End If
-                    //三列三行
-                    If intY + 29 > 112+58*2 and intY + 29 < 112 + 58*3 or intY + 29 > 112 + 58 * 5 and intY + 29 < 112 + 58 * 6 or intY + 29 > 112 + 58 * 8 and intY + 29 < 112 + 58 * 9 Then 
-
-                        y1 = - 2 
-                        y2 = - 1 
-                    End If
-
-                End If
-
-
-
-
-  
-
-                GetColor = GetPixelColor(intX+58*x1, intY+58*y1+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y1+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX+58*x2, intY+58*y1+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y1+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX+58*x1, intY+58*y2+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x1, intY+58*y2+29
-                    LeftClick 1
-                    Delay 50
-                End If
-
-                GetColor = GetPixelColor(intX+58*x2, intY+58*y2+29)
-                If getcolor = "FBE2E4" Then 
-                    MoveTo intX+58*x2, intY+58*y2+29
-                    LeftClick 1
-                    Delay 50
-
-
-
-                End If
-
-
-                //重复结束---------------------------------------------
-
-                MoveTo 496, 672 //解除note模式
-                LeftClick 1
-                Delay 50	
-              
-
-
-                Goto 重新开始
-
+            
+                Call clear_selection
+                MoveTo goodcolor * blocksize + firstnum_x, firstnum_y
+                leftClick 1
+                Delay delayer
+                Call fill_and_delnote(pointx, pointy)
+                filled = filled + 1
+                Call step3_single_number
             End If
             
         End If
@@ -1078,4 +152,216 @@ For pointr = 0 To 8
 
 Next
 
-Goto 第三步
+If filled = 0 Then 
+    Goto 第三步
+Else
+    Goto 第四步
+End If
+
+
+
+
+//===============================子过程======================================
+
+Sub notemode	//开关note模式
+    KeyPress "N", 1
+    Delay delayer * 2
+End Sub
+
+Sub clear_selection   //点击空白处消除数字选中
+    MoveTo right_x + halfsize, bottom_y
+    LeftClick 1
+    Delay delayer * 2
+End Sub
+
+Sub Color_Click(x, y, col) //某点判断颜色点击
+    If GetPixelColor(x, y) = col Then 
+        MoveTo x, y
+        leftClick 1
+        Delay delayer
+    End If 
+End Sub
+
+
+Sub OneY_CheckClick(y, col)	//某y坐标判断颜色点击
+    Dim c
+    For c = 1 to 9
+        Call Color_Click(x_of_c(c), y, col)
+    Next
+End Sub
+
+Sub OneX_CheckClick(x, col)	//某x坐标判断颜色点击
+    Dim r
+    For r = 1 to 9
+        Call Color_Click(x, y_of_r(r), col)
+    Next
+End Sub
+
+
+Function x_of_c(c)  //根据列找x坐标
+    x_of_c = (c - 1) * blocksize + firstblock_x
+End Function
+
+Function y_of_r(r)  //根据行找y坐标
+    y_of_r = (r - 1) * blocksize + firstblock_y
+End Function
+
+Function localize_c(x)	//定位x的列
+    localize_c = (x - left_x) \ blocksize + 1
+End Function
+
+Function localize_r(y)	//定位y的行
+    localize_r = (y - top_y) \ blocksize + 1
+End Function
+
+Function relative_c(x)	//定位x的相对列
+    relative_c = localize_c(x) mod 3
+    If relative_c = 0 Then 
+        relative_c = 3
+    End If
+End Function
+
+Function relative_r(y)	//定位y的相对行
+    relative_r = localize_r(y) mod 3
+    If relative_r = 0 Then 
+        relative_r = 3
+    End If
+End Function
+
+Sub delnote_related(x, y)//传入方块坐标，删除同行同列同九宫格的note
+    Dim x1, x2, y1, y2
+
+    //一行消除标记
+    Call OneY_CheckClick(y, purple)
+
+    //一列消除标记
+    Call OneX_CheckClick(x, purple)
+
+    //九宫格点击
+    If relative_c(x) = 1 Then 
+        x1 = 1
+        x2 = 2
+    ElseIf relative_c(x) = 2 Then
+        x1 = - 1
+        x2 = 1
+    Else 
+        x1 = - 2
+        x2 = - 1
+    End If
+
+    If relative_r(y) = 1 Then 
+        y1 = 1
+        y2 = 2
+    ElseIf relative_r(y) = 2 Then
+        y1 = - 1
+        y2 = 1
+    Else 
+        y1 = - 2
+        y2 = - 1
+    End If
+    
+    Call Color_Click(x + blocksize * x1, y + blocksize * y1, purple)
+    Call Color_Click(x + blocksize * x2, y + blocksize * y1, purple)
+    Call Color_Click(x + blocksize * x1, y + blocksize * y2, purple)
+    Call Color_Click(x + blocksize * x2, y + blocksize * y2, purple)
+
+End Sub
+
+Sub delnote_number	//删除一页中所有冲突的标记
+    Dim intX, intY
+    intY = top_y
+    Do While intY <= bottom_y and intY >= top_y
+        FindColor left_x, intY, right_x, bottom_y, blue, intX, intY  //每行只可能有一个，所以inY确保不重复
+        If intX > 0 And intY > 0 Then 
+            Call delnote_related(intX, intY + halfsize)
+        End if
+        intY = intY + blocksize
+    Loop
+End Sub
+
+Sub fill_and_delnote(x, y)//填充数字并删除冲突标记（填充模式进，填充模式出）
+    MoveTo x, y 	//填充数字
+    leftClick 1
+    Delay delayer
+    Call notemode  
+    Call delnote_related(x, y) 
+    Call notemode  //解除note模式
+End Sub
+
+Sub step3_single_number   //第三步的每个number循环节
+    Dim c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor, intX, intY
+    Rem 开头
+    //每行
+    For r = 1 To 9
+        MoveTo left_x - halfsize, y_of_r(r)  //展示进度
+        colornum = 0
+        For c = 1 To 9
+            If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then 
+                colornum = colornum + 1 	// 一行中的紫色方块个数计数器
+                goodcolor = c 		//一行中最后的一个紫色方块
+            End If
+        Next
+        
+        If colornum = 1 Then
+            FindColor left_x, y_of_r(r), right_x, y_of_r(r), blue, intX, intY
+            If intX > 0 And intY > 0 Then 
+            Else
+                Call fill_and_delnote(x_of_c(goodcolor), y_of_r(r))
+                Goto 开头     //这个数字从头开始
+            End If
+        End If
+    Next
+
+    //每列
+    For c = 1 To 9
+        MoveTo x_of_c(c), top_y - halfsize  //展示进度
+        colornum = 0
+        For r=1 to 9
+            x = x_of_c(c)
+            y = y_of_r(r)
+            If GetPixelColor(x, y) = purple Then 
+                colornum = colornum + 1 	// 一列中的紫色方块个数计数器
+                goodcolor = r 		//一列中最后的一个紫色方块
+            End If
+        Next
+        
+        If colornum = 1 Then 
+            FindColor x_of_c(c), top_y, x_of_c(c), bottom_y, blue, intX, intY
+            If intX > 0 And intY > 0 Then 
+            Else
+                Call fill_and_delnote(x_of_c(c), y_of_r(goodcolor))
+                Goto 开头     //这个数字从头开始
+            End If
+        End If
+    Next
+
+    //每九宫格
+    For area_r = 1 To 3
+        For area_c = 1 To 3
+            MoveTo x_of_c((area_c - 1) * 3 + 2), y_of_r((area_r - 1) * 3 + 2)  //展示进度
+            colornum = 0
+            For small_r = 1 To 3
+                For small_c = 1 To 3
+                    c = (area_c - 1) * 3 + small_c
+                    r = (area_r - 1) * 3 + small_r
+                    If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then
+                        colornum = colornum + 1
+                        goodcolor_c = c
+                        goodcolor_r = r
+                    End If
+                Next
+            Next
+            If colornum = 1 Then 
+                FindColor x_of_c((area_c - 1) * 3 + 1), y_of_r((area_r - 1) * 3 + 1), x_of_c((area_c - 1) * 3 + 3), y_of_r((area_r - 1) * 3 + 3), blue, intX, intY
+                If intX > 0 And intY > 0 Then 
+                Else
+                    Call fill_and_delnote(x_of_c(goodcolor_c), y_of_r(goodcolor_r))
+                    Goto 开头     //这个数字从头开始
+                End If
+            End If
+        Next
+    Next
+End Sub
+
+
+//=================================END=======================================
