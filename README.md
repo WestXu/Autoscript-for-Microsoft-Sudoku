@@ -2,4 +2,4 @@
 A Quick Macro script to solve Microsoft Sudoku automatically
 
 New record in expert mode:
-![Image](https://github.com/WestXu/repositpry/master/Autoscript-for-Microsoft-Sudoku/record.png)
+![Image](https://raw.githubusercontent.com/WestXu/Autoscript-for-Microsoft-Sudoku/master/record.png)
