@@ -28,10 +28,10 @@ SetupOCXFile=
 //===============================常量========================================
 
 //数版位置坐标
-left_x = 796  
-top_y = 146
-right_x = 1547
-bottom_y = 897
+left_x = 795  
+top_y = 145
+right_x = 1548
+bottom_y = 898
 
 //笔记按钮坐标
 notebutton_x = 698
@@ -42,7 +42,7 @@ firstnum_x = 838
 firstnum_y = 949
 
 //系统延时
-delayer = 25
+delayer = 20
 
 
 //以下常量不用改
@@ -292,7 +292,7 @@ Sub step3_single_number   //第三步的每个number循环节
     Dim c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor, intX, intY
     Rem 开头
     MoveTo right_x + halfsize, bottom_y //移开鼠标
-    Delay delayer * 3
+    Delay delayer * 2
     FindColor firstnum_x, firstnum_y - blocksize, firstnum_x + blocksize * 8, firstnum_y, "79581B", intX, intY  // 当该数字没有填完时进行，否则跳过
     If intX > 0 and intY > 0 Then 
         //每行
