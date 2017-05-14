@@ -42,7 +42,7 @@ firstnum_x = 838
 firstnum_y = 949
 
 //系统延时
-delayer = 20
+delayer = 25
 
 
 //以下常量不用改
@@ -291,76 +291,82 @@ End Sub
 Sub step3_single_number   //第三步的每个number循环节
     Dim c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor, intX, intY
     Rem 开头
-    //每行
-    For r = 1 To 9
-        MoveTo left_x - halfsize, y_of_r(r)  //展示进度
-        colornum = 0
-        For c = 1 To 9
-            If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then 
-                colornum = colornum + 1 	// 一行中的紫色方块个数计数器
-                goodcolor = c 		//一行中最后的一个紫色方块
-            End If
-        Next
-        
-        If colornum = 1 Then
-            FindColor left_x, y_of_r(r), right_x, y_of_r(r), blue, intX, intY
-            If intX > 0 And intY > 0 Then 
-            Else
-                Call fill_and_delnote(x_of_c(goodcolor), y_of_r(r))
-                Goto 开头     //这个数字从头开始
-            End If
-        End If
-    Next
-
-    //每列
-    For c = 1 To 9
-        MoveTo x_of_c(c), top_y - halfsize  //展示进度
-        colornum = 0
-        For r=1 to 9
-            x = x_of_c(c)
-            y = y_of_r(r)
-            If GetPixelColor(x, y) = purple Then 
-                colornum = colornum + 1 	// 一列中的紫色方块个数计数器
-                goodcolor = r 		//一列中最后的一个紫色方块
-            End If
-        Next
-        
-        If colornum = 1 Then 
-            FindColor x_of_c(c), top_y, x_of_c(c), bottom_y, blue, intX, intY
-            If intX > 0 And intY > 0 Then 
-            Else
-                Call fill_and_delnote(x_of_c(c), y_of_r(goodcolor))
-                Goto 开头     //这个数字从头开始
-            End If
-        End If
-    Next
-
-    //每九宫格
-    For area_r = 1 To 3
-        For area_c = 1 To 3
-            MoveTo x_of_c((area_c - 1) * 3 + 2), y_of_r((area_r - 1) * 3 + 2)  //展示进度
+    MoveTo right_x + halfsize, bottom_y //移开鼠标
+    Delay delayer * 3
+    FindColor firstnum_x, firstnum_y - blocksize, firstnum_x + blocksize * 8, firstnum_y, "79581B", intX, intY  // 当该数字没有填完时进行，否则跳过
+    If intX > 0 and intY > 0 Then 
+        //每行
+        For r = 1 To 9
+            MoveTo left_x - halfsize, y_of_r(r)  //展示进度
             colornum = 0
-            For small_r = 1 To 3
-                For small_c = 1 To 3
-                    c = (area_c - 1) * 3 + small_c
-                    r = (area_r - 1) * 3 + small_r
-                    If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then
-                        colornum = colornum + 1
-                        goodcolor_c = c
-                        goodcolor_r = r
-                    End If
-                Next
+            For c = 1 To 9
+                If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then 
+                    colornum = colornum + 1 	// 一行中的紫色方块个数计数器
+                    goodcolor = c 		//一行中最后的一个紫色方块
+                End If
             Next
-            If colornum = 1 Then 
-                FindColor x_of_c((area_c - 1) * 3 + 1), y_of_r((area_r - 1) * 3 + 1), x_of_c((area_c - 1) * 3 + 3), y_of_r((area_r - 1) * 3 + 3), blue, intX, intY
+        
+            If colornum = 1 Then
+                FindColor left_x, y_of_r(r), right_x, y_of_r(r), blue, intX, intY
                 If intX > 0 And intY > 0 Then 
                 Else
-                    Call fill_and_delnote(x_of_c(goodcolor_c), y_of_r(goodcolor_r))
+                    Call fill_and_delnote(x_of_c(goodcolor), y_of_r(r))
                     Goto 开头     //这个数字从头开始
                 End If
             End If
         Next
-    Next
+
+        //每列
+        For c = 1 To 9
+            MoveTo x_of_c(c), top_y - halfsize  //展示进度
+            colornum = 0
+            For r=1 to 9
+                x = x_of_c(c)
+                y = y_of_r(r)
+                If GetPixelColor(x, y) = purple Then 
+                    colornum = colornum + 1 	// 一列中的紫色方块个数计数器
+                    goodcolor = r 		//一列中最后的一个紫色方块
+                End If
+            Next
+        
+            If colornum = 1 Then 
+                FindColor x_of_c(c), top_y, x_of_c(c), bottom_y, blue, intX, intY
+                If intX > 0 And intY > 0 Then 
+                Else
+                    Call fill_and_delnote(x_of_c(c), y_of_r(goodcolor))
+                    Goto 开头     //这个数字从头开始
+                End If
+            End If
+        Next
+
+        //每九宫格
+        For area_r = 1 To 3
+            For area_c = 1 To 3
+                MoveTo x_of_c((area_c - 1) * 3 + 2), y_of_r((area_r - 1) * 3 + 2)  //展示进度
+                colornum = 0
+                For small_r = 1 To 3
+                    For small_c = 1 To 3
+                        c = (area_c - 1) * 3 + small_c
+                        r = (area_r - 1) * 3 + small_r
+                        If GetPixelColor(x_of_c(c), y_of_r(r)) = purple Then
+                            colornum = colornum + 1
+                            goodcolor_c = c
+                            goodcolor_r = r
+                        End If
+                    Next
+                Next
+                If colornum = 1 Then 
+                    FindColor x_of_c((area_c - 1) * 3 + 1), y_of_r((area_r - 1) * 3 + 1), x_of_c((area_c - 1) * 3 + 3), y_of_r((area_r - 1) * 3 + 3), blue, intX, intY
+                    If intX > 0 And intY > 0 Then 
+                    Else
+                        Call fill_and_delnote(x_of_c(goodcolor_c), y_of_r(goodcolor_r))
+                        Goto 开头     //这个数字从头开始
+                    End If
+                End If
+            Next
+        Next
+    End If
+    
 End Sub
 
 
