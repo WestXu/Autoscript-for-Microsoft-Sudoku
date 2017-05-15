@@ -10,7 +10,7 @@ RunOnce=1
 EnableWindow=
 MacroID=459e373f-a1e2-4493-ba78-6f89fe389e58
 Description=Sudoku
-Enable=1
+Enable=0
 AutoRun=0
 [Repeat]
 Type=0
@@ -27,38 +27,37 @@ SetupOCXFile=
 
 //===============================常量========================================
 
-//数版位置坐标
-left_x = 795  
-top_y = 145
-right_x = 1548
-bottom_y = 898
-
-//笔记按钮坐标
-notebutton_x = 698
-notebutton_y = 949 
-
-//下方第一个数字的坐标
-firstnum_x = 838 
-firstnum_y = 949
-
 //系统延时
-delayer = 20
+delayer = 50
 
 
-//以下常量不用改
-blocksize = (right_x - left_x) \ 9
+FindColor 0,0,1920,1080,"F3C87A",left_x,top_y //整张数独的左上角
+If left_x > 0 And top_y > 0 Then 
+Else 
+    MsgBox "Make sure a new game was started!"
+End If
+
+FindColor 0,0,1920,1080,"5E4416",ax,ay //第三个方块的右上角颜色
+blocksize = (ax - left_x) \ 3 + 1
+right_x = left_x + blocksize * 9
+bottom_y = top_y + blocksize * 9
 halfsize = blocksize \ 2
+
+//颜色常量
 white = "FFFFFF"
 yellow = "E0FDFF"
 purple = "FBE2E4"
-blue = "93691E"  //选中一个区块的时候，区块左上角边缘处的深蓝色
-//第一个方块的坐标
-firstblock_x = left_x + blocksize \ 6
-firstblock_y = top_y + halfsize
+blue = "93691E"//选中一个区块的时候，区块左上角边缘处的深蓝色
 
+//第一个方块的坐标
+firstblock_x = left_x + blocksize \ 8
+firstblock_y = top_y + blocksize \ 8
+
+//下方第一个数字的坐标
+firstnum_x = left_x + halfsize 
+firstnum_y = bottom_y + halfsize
 
 //=================================END=======================================
-
 
 
 
@@ -90,7 +89,7 @@ Call clear_selection
 For number = 0 to 8
     MoveTo number * blocksize + firstnum_x, firstnum_y
     leftClick 1
-    Delay delayer * 2
+    Delay delayer
     Call delnote_number
 Next
 
@@ -102,9 +101,9 @@ Rem 第三步
 //第三步：填充每行列缺少的个数为一的数字
 
 For number = 0 to 8
-    MoveTo number * blocksize + firstnum_x, firstnum_y  //展示进度
+    MoveTo number * blocksize + firstnum_x, firstnum_y
     leftClick 1
-    Delay delayer * 2
+    Delay delayer
     Call step3_single_number
 Next
 
@@ -127,7 +126,7 @@ For pointr = 1 To 9
             For number = 0 to 8
                 MoveTo number * blocksize + firstnum_x, firstnum_y  //选数字
                 leftClick 1
-                Delay delayer * 2
+                Delay delayer
 
                 If GetPixelColor(pointx, pointy) = purple Then   //判断该格颜色
                     colornum = colornum + 1
@@ -165,20 +164,20 @@ End If
 
 Sub notemode	//开关note模式
     KeyPress "N", 1
-    Delay delayer * 2
+    Delay delayer
 End Sub
 
 Sub clear_selection   //点击空白处消除数字选中
     MoveTo right_x + halfsize, bottom_y
     LeftClick 1
-    Delay delayer * 2
+    Delay delayer
 End Sub
 
 Sub Color_Click(x, y, col) //某点判断颜色点击
     If GetPixelColor(x, y) = col Then 
         MoveTo x, y
-        leftClick 1
-        Delay delayer
+        LeftClick 1
+        Delay delayer \ 2
     End If 
 End Sub
 
@@ -282,7 +281,6 @@ End Sub
 Sub fill_and_delnote(x, y)//填充数字并删除冲突标记（填充模式进，填充模式出）
     MoveTo x, y 	//填充数字
     leftClick 1
-    Delay delayer
     Call notemode  
     Call delnote_related(x, y) 
     Call notemode  //解除note模式
@@ -292,8 +290,8 @@ Sub step3_single_number   //第三步的每个number循环节
     Dim c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor, intX, intY
     Rem 开头
     MoveTo right_x + halfsize, bottom_y //移开鼠标
-    Delay delayer * 2
-    FindColor firstnum_x, firstnum_y - blocksize, firstnum_x + blocksize * 8, firstnum_y, "79581B", intX, intY  // 当该数字没有填完时进行，否则跳过
+    Delay delayer
+    FindColorEx firstnum_x, firstnum_y - blocksize, firstnum_x + blocksize * 8, firstnum_y, "7A591C", 1, 0.95, intX, intY  // 当该数字没有填完时进行，否则跳过
     If intX > 0 and intY > 0 Then 
         //每行
         For r = 1 To 9
