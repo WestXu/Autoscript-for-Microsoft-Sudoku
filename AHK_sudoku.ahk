@@ -3,7 +3,7 @@
 ;===============================常量========================================
 
 ;系统延时
-delayer := 30
+delayer := 50
 
 ;鼠标速度
 SetDefaultMouseSpeed, 0
@@ -40,83 +40,76 @@ firstnum_y := bottom_y + halfsize
 
 ;=================================END=======================================
 
+blocktable := {}
+for row in nine {
+    for column in nine {    
+    blocktable[row, column] := new Block(row, column)
+    }
+}
 
 
-;第一步：全部标满
-
+第一步:
 notemode() ;进入note模式
 
-For r in nine {
-    For c in nine {
-        PixelGetColor, Getcolor, x_of_c(c), y_of_r(r)
+for row in nine {
+    for column in nine {  
+        PixelGetColor, Getcolor, blocktable[row, column].x, blocktable[row, column].y
         If (Getcolor = white or Getcolor = yellow) { 
-            MouseMove, x_of_c(c), y_of_r(r)
+            MouseMove, blocktable[row, column].x, blocktable[row, column].y, 0 
             Click
             SendInput 123456789
+        } else {
+            blocktable[row, column].notes := [0,0,0,0,0,0,0,0,0]
         }
     }
 }
 
 clear_selection()
 
-;第二步：取消冲突标记
+
+第二步:
 For number in nine {
     MouseMove, (number - 1) * blocksize + firstnum_x, firstnum_y
     Click
     sleep, delayer
-    delnote_number()
+    delnote_number(number)
 }
 
-
-notemode()    ;解除note模式
+notemode() ;解除note模式
 
 
 第三步:
-;第三步：填充每行列缺少的个数为一的数字
-
 For number in nine {
     MouseMove, (number - 1) * blocksize + firstnum_x, firstnum_y
     Click
     sleep, delayer
-    step3_single_number()
+    step3_single_number(number)
 }
 
+clear_selection()
 
 第四步:
-;第四步：放数字
 filled := 0 ;已放数字个数计数器
-;全行判断
-For pointr in nine {
-    ;一行判断
-    For pointc in nine {
-        clear_selection()
-        pointx := x_of_c(pointc)
-        pointy := y_of_r(pointr)
-        PixelGetColor, Getcolor, pointx, pointy
-        If (Getcolor = white) { 
+
+For r in nine { ;全行判断
+    For c in nine { ;一行判断
+        If (blocktable[r, c].num = 0) { 
+            MouseMove, x_of_c(c), y_of_r(r)
             colornum := 0
-
-            For number in nine {
-                MouseMove, (number - 1) * blocksize + firstnum_x, firstnum_y  ;选数字
-                Click
-                sleep, delayer
-
-                PixelGetColor, Getcolor, pointx, pointy
-                If (Getcolor = purple) {   ;判断该格颜色
+            for i, note in blocktable[r, c].notes {
+                if (note != 0) {
                     colornum := colornum + 1
-                    goodcolor := number
+                    goodcolor := i 
                 }
             }
 
             If (colornum = 1) { 
-            
                 clear_selection()
                 MouseMove, (goodcolor - 1) * blocksize + firstnum_x, firstnum_y
                 Click
-                sleep, delayer
-                fill_and_delnote(pointx, pointy)
+                fill_and_delnote(r, c, goodcolor)
                 filled := filled + 1
-                step3_single_number()
+                step3_single_number(goodcolor)
             }
             
         }
@@ -132,14 +125,31 @@ If (filled = 0) {
 }
 
 
-
-
 ;===============================子过程======================================
+
+class Block {
+    __New(r, c) {
+        this.x := x_of_c(c)
+        this.y := y_of_r(r)
+        this.num := 0 ;0表示没有数字，1表示有数字
+        this.notes := [1,2,3,4,5,6,7,8,9]
+    }
+    __Get(var) {
+        if (var = "x")
+            return this.x
+        if (var = "y")
+            return this.y
+        if (var = "num")
+            return this.num
+        if (var = "notes")
+            return this.notes
+    }
+}
 
 notemode() { ;开关note模式
     global
     SendInput n
-    sleep, delayer
+    sleep, delayer * 2
 }
 
 
@@ -150,31 +160,15 @@ clear_selection() {   ;点击空白处消除数字选中
     sleep, delayer
 }
 
-Color_Click(x, y, col) { ;某点判断颜色点击
+delnote(r, c, number) { ;某点判断颜色消除note
     global
-    PixelGetColor, Getcolor, x, y
-    If (Getcolor = col) { 
-        MouseMove, x, y
+    If (blocktable[r, c].notes[number] != 0) { 
+        MouseMove, x_of_c(c), y_of_r(r)
+        blocktable[r, c].notes[number] := 0
         Click
-;        sleep, delayer // 2
+        sleep, delayer // 5
     }
 }
-
-
-OneY_CheckClick(y, col) { ;某y坐标判断颜色点击
-    global
-    For c in nine {
-        Color_Click(x_of_c(c), y, col)
-    }
-}
-
-OneX_CheckClick(x, col)	{ ;某x坐标判断颜色点击
-    global
-    For r in nine {
-        Color_Click(x, y_of_r(r), col)
-    }
-}
-
 
 x_of_c(c) { ; 根据列找x坐标
     global
@@ -196,90 +190,91 @@ localize_r(y) { ;定位y的行
     return (y - top_y) // blocksize + 1
 }
 
-relative_c(x) { ;定位x的相对列
+relative(n) { ;定位行或列n的相对行或列
     global
-    relative_c := mod(localize_c(x), 3)
-    If (relative_c = 0) { 
-        relative_c := 3
+    relative := mod(n, 3)
+    If (relative = 0) { 
+        relative := 3
     }
-    return relative_c
+    return relative
 }
 
-relative_r(y) { ;定位y的相对行
-    global
-    relative_r := mod(localize_r(y), 3)
-    If (relative_r = 0) { 
-        relative_r := 3
-    }
-    return relative_r
-}
-
-delnote_related(x, y) { ;传入方块坐标，删除同行同列同九宫格的note
-    global
+delnote_related(r, c, number) { ;传入方块，删除同行同列同九宫格的note
+    local x1, x2, y1, y2, row, column
 
     ;一行消除标记
-    OneY_CheckClick(y, purple)
+    For column in nine {
+        delnote(r, column, number)
+    }
 
     ;一列消除标记
-    OneX_CheckClick(x, purple)
+    For row in nine {
+        delnote(row, c, number)
+    }
 
     ;九宫格点击
-    If (relative_c(x) = 1) { 
+    If (relative(c) = 1) { 
         x1 := 1
         x2 := 2
     }
-    If (relative_c(x) = 2) {
+    If (relative(c) = 2) {
         x1 := - 1
         x2 := 1
     }
-    If (relative_c(x) = 3) {
+    If (relative(c) = 3) {
         x1 := - 2
         x2 := - 1
     }
 
-    If (relative_r(y) = 1) { 
+    If (relative(r) = 1) { 
         y1 := 1
         y2 := 2
     }
-    If (relative_r(y) = 2) {
+    If (relative(r) = 2) {
         y1 := - 1
         y2 := 1
     }
-    If (relative_r(y) = 3) {
+    If (relative(r) = 3) {
         y1 := - 2
         y2 := - 1
     }
     
-    Color_Click(x + blocksize * x1, y + blocksize * y1, purple)
-    Color_Click(x + blocksize * x2, y + blocksize * y1, purple)
-    Color_Click(x + blocksize * x1, y + blocksize * y2, purple)
-    Color_Click(x + blocksize * x2, y + blocksize * y2, purple)
+    delnote(r + y1, c + x1, number)
+    delnote(r + y1, c + x2, number)
+    delnote(r + y2, c + x1, number)
+    delnote(r + y2, c + x2, number)
 
 }
 
-delnote_number() { ;删除一页中所有冲突的标记
-    global
+delnote_number(number) { ;删除一页中所有冲突的标记
+    local intX, intY, r, c
     intY := top_y
     While (intY <= bottom_y and intY >= top_y) {
         PixelSearch, intX, intY, left_x, intY, right_x, bottom_y, blue, 0, fast
         If (intX > 0 And intY > 0) { 
-            delnote_related(intX, intY + halfsize)
+            r := localize_r(intY + halfsize)
+            c := localize_c(intX)
+            blocktable[r, c].num := 1
+            blocktable[r, c].notes := [0,0,0,0,0,0,0,0,0]
+            delnote_related(r, c, number)
         }
         intY := intY + blocksize
     }
 }
 
-fill_and_delnote(x, y) { ;填充数字并删除冲突标记（填充模式进，填充模式出）
+fill_and_delnote(r, c, number) { ;填充数字并删除冲突标记（填充模式进，填充模式出）
     global
-    MouseMove, x, y 	;填充数字
+    MouseMove, x_of_c(c), y_of_r(r) 	;填充数字
+    blocktable[r, c].num := 1
+    blocktable[r, c].notes := [0,0,0,0,0,0,0,0,0]
     Click
     notemode()  
-    delnote_related(x, y) 
+    delnote_related(r, c, number)
     notemode()  ;解除note模式
 }
 
-step3_single_number() { ;第三步的每个number循环节
-    global delayer, left_x, right_x, top_y, bottom_y, firstnum_x, firstnum_y, blocksize, halfsize, nine, three, purple, blue, top_y, halfsize
+step3_single_number(number) { ;第三步的每个number循环节
+    local c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor, intX, intY, goodcolor_c, goodcolor_c
     开头:
     MouseMove, right_x + halfsize, bottom_y ;移开鼠标
     sleep, delayer * 2
@@ -290,18 +285,16 @@ step3_single_number() { ;第三步的每个number循环节
             MouseMove, left_x - halfsize, y_of_r(r)  ;展示进度
             colornum := 0
             For c in nine {
-                PixelGetColor, Getcolor, x_of_c(c), y_of_r(r)
-                If (Getcolor = purple) { 
+                If (blocktable[r, c].notes[number] != 0) { 
                     colornum := colornum + 1 	; 一行中的紫色方块个数计数器
                     goodcolor := c 		;一行中最后的一个紫色方块
                 }
             }
-        
             If (colornum = 1) {
                 PixelSearch, intX, intY, left_x, y_of_r(r), right_x, y_of_r(r), blue, 0, fast
                 If (intX > 0 And intY > 0) { 
                 } else {
-                    fill_and_delnote(x_of_c(goodcolor), y_of_r(r))
+                    fill_and_delnote(r, goodcolor, number)
                     Goto, 开头     ;这个数字从头开始
                 }
             }
@@ -312,10 +305,7 @@ step3_single_number() { ;第三步的每个number循环节
             MouseMove, x_of_c(c), top_y - halfsize  ;展示进度
             colornum := 0
             For r in nine {
-                x := x_of_c(c)
-                y := y_of_r(r)
-                PixelGetColor, Getcolor, x, y
-                If (Getcolor = purple) { 
+                If (blocktable[r, c].notes[number] != 0) { 
                     colornum := colornum + 1 	; 一列中的紫色方块个数计数器
                     goodcolor := r 		;一列中最后的一个紫色方块
                 }
@@ -325,7 +315,7 @@ step3_single_number() { ;第三步的每个number循环节
                 PixelSearch, intX, intY, x_of_c(c), top_y, x_of_c(c), bottom_y, blue, 0, fast
                 If (intX > 0 And intY > 0) { 
                 } else {
-                    fill_and_delnote(x_of_c(c), y_of_r(goodcolor))
+                    fill_and_delnote(goodcolor, c, number)
                     Goto, 开头     ;这个数字从头开始
                 }
             }
@@ -340,8 +330,7 @@ step3_single_number() { ;第三步的每个number循环节
                     For small_c in three {
                         c := (area_c - 1) * 3 + small_c
                         r := (area_r - 1) * 3 + small_r
-                        PixelGetColor, Getcolor, x_of_c(c), y_of_r(r)
-                        If (Getcolor = purple) {
+                        If (blocktable[r, c].notes[number] != 0) {
                             colornum := colornum + 1
                             goodcolor_c := c
                             goodcolor_r := r
@@ -352,7 +341,7 @@ step3_single_number() { ;第三步的每个number循环节
                     PixelSearch, intX, intY, x_of_c((area_c - 1) * 3 + 1), y_of_r((area_r - 1) * 3 + 1), x_of_c((area_c - 1) * 3 + 3), y_of_r((area_r - 1) * 3 + 3), blue, 0, fast
                     If (intX > 0 And intY > 0) { 
                     } else {
-                        fill_and_delnote(x_of_c(goodcolor_c), y_of_r(goodcolor_r))
+                        fill_and_delnote(goodcolor_r, goodcolor_c, number)
                         Goto, 开头     ;这个数字从头开始
                     }
                 }
