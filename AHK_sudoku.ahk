@@ -12,6 +12,7 @@ PixelSearch, left_x, top_y, 0, 0, 1920, 1080, 0xF3C87A, 0, fast ;整张数独的
 If (left_x > 0 And top_y > 0) {
 } else {
     MsgBox, Make sure a new game was started!
+    Reload
 }
 
 PixelSearch, ax, ay, 0, 0, 1920, 1080, 0x5E4416, 0, fast ;第三个方块的右上角颜色
@@ -47,19 +48,21 @@ for row in nine {
     }
 }
 
+fillednum := [0,0,0,0,0,0,0,0,0]
+
 
 第一步:
 notemode() ;进入note模式
 
-for row in nine {
-    for column in nine {  
-        PixelGetColor, Getcolor, blocktable[row, column].x, blocktable[row, column].y
+for r in nine {
+    for c in nine {  
+        PixelGetColor, Getcolor, blocktable[r, c].x, blocktable[r, c].y
         If (Getcolor = white or Getcolor = yellow) { 
-            MouseMove, blocktable[row, column].x, blocktable[row, column].y, 0 
+            MouseMove, blocktable[r, c].x, blocktable[r, c].y, 0 
             Click
             SendInput 123456789
         } else {
-            blocktable[row, column].notes := [0,0,0,0,0,0,0,0,0]
+            blocktable[r, c].notes := [0,0,0,0,0,0,0,0,0]
         }
     }
 }
@@ -79,16 +82,6 @@ notemode() ;解除note模式
 
 
 第三步:
-For number in nine {
-    MouseMove, (number - 1) * blocksize + firstnum_x, firstnum_y
-    Click
-    sleep, delayer
-    step3_single_number(number)
-}
-
-clear_selection()
-
-第四步:
 filled := 0 ;已放数字个数计数器
 
 For r in nine { ;全行判断
@@ -109,7 +102,7 @@ For r in nine { ;全行判断
                 Click
                 fill_and_delnote(r, c, goodcolor)
                 filled := filled + 1
-                step3_single_number(goodcolor)
+                step4_single_number(goodcolor)
             }
             
         }
@@ -118,11 +111,21 @@ For r in nine { ;全行判断
 
 }
 
-If (filled = 0) { 
-    Goto, 第三步
-} else {
+If (filled != 0) {
     Goto, 第四步
 }
+
+
+第四步:
+For number in nine {
+    MouseMove, (number - 1) * blocksize + firstnum_x, firstnum_y
+    Click
+    sleep, delayer
+    step4_single_number(number)
+}
+
+Goto, 第三步
+
 
 
 ;===============================子过程======================================
@@ -131,18 +134,8 @@ class Block {
     __New(r, c) {
         this.x := x_of_c(c)
         this.y := y_of_r(r)
-        this.num := 0 ;0表示没有数字，1表示有数字
+        this.num := 0
         this.notes := [1,2,3,4,5,6,7,8,9]
-    }
-    __Get(var) {
-        if (var = "x")
-            return this.x
-        if (var = "y")
-            return this.y
-        if (var = "num")
-            return this.num
-        if (var = "notes")
-            return this.notes
     }
 }
 
@@ -254,7 +247,10 @@ delnote_number(number) { ;删除一页中所有冲突的标记
         If (intX > 0 And intY > 0) { 
             r := localize_r(intY + halfsize)
             c := localize_c(intX)
-            blocktable[r, c].num := 1
+            If (blocktable[r, c].num != number) {
+                blocktable[r, c].num := number
+                fillednum[number] := fillednum[number] + 1
+            }
             blocktable[r, c].notes := [0,0,0,0,0,0,0,0,0]
             delnote_related(r, c, number)
         }
@@ -265,7 +261,8 @@ delnote_number(number) { ;删除一页中所有冲突的标记
 fill_and_delnote(r, c, number) { ;填充数字并删除冲突标记（填充模式进，填充模式出）
     global
     MouseMove, x_of_c(c), y_of_r(r) 	;填充数字
-    blocktable[r, c].num := 1
+    blocktable[r, c].num := number
+    fillednum[number] := fillednum[number] + 1
     blocktable[r, c].notes := [0,0,0,0,0,0,0,0,0]
     Click
     notemode()  
@@ -273,30 +270,27 @@ fill_and_delnote(r, c, number) { ;填充数字并删除冲突标记（填充模�
     notemode()  ;解除note模式
 }
 
-step3_single_number(number) { ;第三步的每个number循环节
-    local c, r, x, y, area_c, area_r, small_c, small_r, colornum, goodcolor, intX, intY, goodcolor_c, goodcolor_c
+step4_single_number(number) { ;第三步的每个number循环节
+    local c, r, x, y, already, area_c, area_r, small_c, small_r, colornum, goodcolor, goodcolor_c, goodcolor_c
     开头:
-    MouseMove, right_x + halfsize, bottom_y ;移开鼠标
-    sleep, delayer * 2
-    PixelSearch, intX, intY, firstnum_x, firstnum_y - blocksize, firstnum_x + blocksize * 8, firstnum_y, 0x7A591C, 8, fast ;95%的相似度就是13/255 ; 当该数字没有填完时进行，否则跳过
-    If (intX > 0 and intY > 0) { 
+    If (fillednum[number] < 9) { 
         ;每行
         For r in nine {
             MouseMove, left_x - halfsize, y_of_r(r)  ;展示进度
             colornum := 0
+            already := 0
             For c in nine {
                 If (blocktable[r, c].notes[number] != 0) { 
                     colornum := colornum + 1 	; 一行中的紫色方块个数计数器
                     goodcolor := c 		;一行中最后的一个紫色方块
                 }
-            }
-            If (colornum = 1) {
-                PixelSearch, intX, intY, left_x, y_of_r(r), right_x, y_of_r(r), blue, 0, fast
-                If (intX > 0 And intY > 0) { 
-                } else {
-                    fill_and_delnote(r, goodcolor, number)
-                    Goto, 开头     ;这个数字从头开始
+                If (blocktable[r, c].num = number) {
+                    already := 1
                 }
+            }
+            If (colornum = 1 and already = 0) {
+                fill_and_delnote(r, goodcolor, number)
+                Goto, 开头     ;这个数字从头开始
             }
         }
 
@@ -304,20 +298,20 @@ step3_single_number(number) { ;第三步的每个number循环节
         For c in nine {
             MouseMove, x_of_c(c), top_y - halfsize  ;展示进度
             colornum := 0
+            already := 0
             For r in nine {
                 If (blocktable[r, c].notes[number] != 0) { 
                     colornum := colornum + 1 	; 一列中的紫色方块个数计数器
                     goodcolor := r 		;一列中最后的一个紫色方块
                 }
-            }
-        
-            If (colornum = 1) { 
-                PixelSearch, intX, intY, x_of_c(c), top_y, x_of_c(c), bottom_y, blue, 0, fast
-                If (intX > 0 And intY > 0) { 
-                } else {
-                    fill_and_delnote(goodcolor, c, number)
-                    Goto, 开头     ;这个数字从头开始
+                If (blocktable[r, c].num = number) {
+                    already := 1
                 }
+
+            }
+            If (colornum = 1 and already = 0) { 
+                fill_and_delnote(goodcolor, c, number)
+                Goto, 开头     ;这个数字从头开始
             }
         }
 
@@ -326,6 +320,7 @@ step3_single_number(number) { ;第三步的每个number循环节
             For area_c in three {
                 MouseMove, x_of_c((area_c - 1) * 3 + 2), y_of_r((area_r - 1) * 3 + 2)  ;展示进度
                 colornum := 0
+                already := 0
                 For small_r in three {
                     For small_c in three {
                         c := (area_c - 1) * 3 + small_c
@@ -335,20 +330,18 @@ step3_single_number(number) { ;第三步的每个number循环节
                             goodcolor_c := c
                             goodcolor_r := r
                         }
+                        If (blocktable[r, c].num = number) {
+                            already := 1
+                        }
                     }
                 }
-                If (colornum = 1) { 
-                    PixelSearch, intX, intY, x_of_c((area_c - 1) * 3 + 1), y_of_r((area_r - 1) * 3 + 1), x_of_c((area_c - 1) * 3 + 3), y_of_r((area_r - 1) * 3 + 3), blue, 0, fast
-                    If (intX > 0 And intY > 0) { 
-                    } else {
-                        fill_and_delnote(goodcolor_r, goodcolor_c, number)
-                        Goto, 开头     ;这个数字从头开始
-                    }
+                If (colornum = 1 and already = 0) { 
+                    fill_and_delnote(goodcolor_r, goodcolor_c, number)
+                    Goto, 开头     ;这个数字从头开始
                 }
             }
         }
     }
-    
 }
 
 
@@ -357,4 +350,4 @@ step3_single_number(number) { ;第三步的每个number循环节
 return
 
 F11:: pause
-F12:: ExitApp 
+F12:: Reload 
