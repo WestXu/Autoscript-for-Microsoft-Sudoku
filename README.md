@@ -9,6 +9,4 @@ An Autohotkey script to solve Microsoft Sudoku automatically with every step sho
 5. Hit F10 to start the script (F11 to pause and F12 to stop and reload).
 
 ## New record in expert mode
-<center>
-
-![Image](https://raw.githubusercontent.com/WestXu/Autoscript-for-Microsoft-Sudoku/master/record.png)</center>
+![Image](https://raw.githubusercontent.com/WestXu/Autoscript-for-Microsoft-Sudoku/master/record.png)
